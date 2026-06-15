@@ -1,5 +1,7 @@
 module Variations exposing (..)
 
+import Set exposing (..)
+
 
 normalize : String -> String
 normalize seed =
@@ -54,3 +56,21 @@ padSimple seed =
     suffixes
         |> List.map (\suf -> s ++ suf)
         |> List.filter (\x -> String.length x <= 7)
+
+
+transformers : List (String -> List String)
+transformers =
+    [ reverse
+    , truncate
+    , dropAny
+    , padSimple
+    ]
+
+
+fromSeed : String -> List String
+fromSeed word =
+    List.foldl
+        (\f acc -> Set.union acc (Set.fromList (f word)))
+        (Set.singleton (normalize word))
+        transformers
+        |> Set.toList
