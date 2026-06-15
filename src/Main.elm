@@ -1,48 +1,47 @@
-module Main exposing (..)
+module Main exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, text)
-import Html.Events exposing (onClick)
-
-
-
--- MAIN
-
-
-main =
-    Browser.sandbox { init = init, update = update, view = view }
+import Html exposing (Html, div, h1, input, li, text, ul)
+import Html.Attributes exposing (placeholder, value)
+import Html.Events exposing (onInput)
+import Variations
 
 
 
 -- MODEL
+-- TODO: a record with one field, the seed string.
 
 
 type alias Model =
-    Int
+    { seed : String }
+
+
+
+-- MSG
+
+
+type Msg
+    = SeedChanged String
+
+
+
+-- INIT
 
 
 init : Model
 init =
-    0
+    { seed = "Ahmed" }
 
 
 
 -- UPDATE
 
 
-type Msg
-    = Increment
-    | Decrement
-
-
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        Increment ->
-            model + 1
-
-        Decrement ->
-            model - 1
+        SeedChanged s ->
+            { model | seed = s }
 
 
 
@@ -52,7 +51,12 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ button [ onClick Decrement ] [ text "-" ]
-        , div [] [ text (String.fromInt model) ]
-        , button [ onClick Increment ] [ text "+" ]
+        [ h1 [] [ text "Plate Finder" ]
+        , input [ placeholder "seed", value model.seed, onInput SeedChanged ] []
+        , ul [] (List.map (\c -> li [] [ text c ]) (Variations.fromSeed model.seed))
         ]
+
+
+main : Program () Model Msg
+main =
+    Browser.sandbox { init = init, update = update, view = view }
