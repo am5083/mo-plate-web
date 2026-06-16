@@ -1,0 +1,16 @@
+; Core MO DOR availability-flow logic, vendored from the mo-plate-finder CLI
+; (github.com/.../mo-custom-license-finder). Kept as a separate library so the
+; web backend reuses the exact, battle-tested scraping flow. See VENDOR.md.
+(library
+ (name mo_plate_core)
+ (libraries
+  lambdasoup
+  cohttp-eio
+  eio_main
+  tls-eio
+  ca-certs
+  mirage-crypto-rng-eio
+  mirage-crypto-rng.unix
+  uri
+  unix
+  yojson))

@@ -1,0 +1,3 @@
+(executable
+ (name main)
+ (libraries mo_plate_core cohttp-eio eio_main uri yojson unix))
