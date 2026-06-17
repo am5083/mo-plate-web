@@ -1,0 +1,7 @@
+_build/
+elm-stuff/
+elm.js
+node_modules/
+.git/
+.github/
+*.sqlite

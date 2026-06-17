@@ -79,9 +79,13 @@ type Msg
 -- INIT
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { seed = "Ahmed", apiBase = "http://localhost:8080", results = Dict.empty }, Cmd.none )
+type alias Flags =
+    { apiBase : String }
+
+
+init : Flags -> ( Model, Cmd Msg )
+init flags =
+    ( { seed = "Ahmed", apiBase = flags.apiBase, results = Dict.empty }, Cmd.none )
 
 
 
@@ -128,6 +132,6 @@ subscriptions _ =
     Sub.none
 
 
-main : Program () Model Msg
+main : Program Flags Model Msg
 main =
     Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
