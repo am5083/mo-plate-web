@@ -45,7 +45,5 @@ elm make src/Main.elm --output=index.html
 
 # TODO
 
-1. Style the frontend + add API support; style frontend
-2. Implement OCaml backend + add docker container + host on gh pages
-
+1. Style the frontend; write all the CSS (Probably never going to happen, honestly)
 
