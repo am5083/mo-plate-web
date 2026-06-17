@@ -1,39 +1,36 @@
-# Fly.io config for the live-check backend.
-#   fly launch --no-deploy   (first time — creates the app, pick a unique name)
-#   fly deploy
+# fly.toml app configuration file generated for mo-plate-web-73472 on 2026-06-16T20:46:35-05:00
 #
-# Scales to zero when idle (free-tier friendly) and wakes on request.
-app = "mo-plate-web"
-primary_region = "ord"   # Chicago — close to Missouri
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'mo-plate-web-73472'
+primary_region = 'ord'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  PORT = "8080"
-  # Cadence tuned to stay under Imperva's bot wall. Lower at your own risk.
-  RATE_DELAY_MS = "750"
-  JITTER_MS = "250"
-  REFRESH_EVERY = "40"
-  # Per-client budget so one visitor can't monopolise the single upstream queue.
-  IP_RATE_CAPACITY = "8"
-  IP_RATE_WINDOW_SEC = "60"
-  # Lock to your Pages origin in production, e.g. https://<user>.github.io
-  ALLOWED_ORIGIN = "*"
+  ALLOWED_ORIGIN = '*'
+  IP_RATE_CAPACITY = '8'
+  IP_RATE_WINDOW_SEC = '60'
+  JITTER_MS = '250'
+  PORT = '8080'
+  RATE_DELAY_MS = '750'
+  REFRESH_EVERY = '40'
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
 
   [[http_service.checks]]
-    method = "GET"
-    path = "/api/health"
-    interval = "30s"
-    timeout = "5s"
+    interval = '30s'
+    timeout = '5s'
+    method = 'GET'
+    path = '/api/health'
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "256mb"
+  size = 'shared-cpu-1x'
+  memory = '256mb'
