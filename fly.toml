@@ -1,0 +1,36 @@
+# fly.toml app configuration file generated for mo-plate-web-73472 on 2026-06-16T20:46:35-05:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'mo-plate-web-73472'
+primary_region = 'ord'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[env]
+  ALLOWED_ORIGIN = '*'
+  IP_RATE_CAPACITY = '8'
+  IP_RATE_WINDOW_SEC = '60'
+  JITTER_MS = '250'
+  PORT = '8080'
+  RATE_DELAY_MS = '750'
+  REFRESH_EVERY = '40'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = '30s'
+    timeout = '5s'
+    method = 'GET'
+    path = '/api/health'
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '256mb'
