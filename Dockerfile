@@ -20,12 +20,14 @@ RUN eval $(opam env) && dune build server/main.exe
 
 # ─── runtime stage ────────────────────────────────────────────────────────
 FROM debian:12-slim
+# netbase provides /etc/services and /etc/protocols. Without it, getaddrinfo
+# can't map the service NAME "https" -> 443 (cohttp-eio passes the scheme as the
+# service when the URL has no explicit port), so resolution returns empty and you
+# get "failed to resolve hostname". ca-certificates for TLS, libgmp10 for zarith.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates libgmp10 && rm -rf /var/lib/apt/lists/*
+    ca-certificates libgmp10 netbase && rm -rf /var/lib/apt/lists/*
 
-# debian-slim ships without /etc/nsswitch.conf, so glibc's getaddrinfo never
-# consults DNS and hostname resolution returns empty ("failed to resolve
-# hostname"). Restore the normal resolution order.
+# Belt-and-suspenders: ensure glibc consults DNS for host lookups too.
 RUN printf 'hosts: files dns\n' > /etc/nsswitch.conf
 
 COPY --from=build /app/_build/default/server/main.exe /usr/local/bin/mo-plate-server
