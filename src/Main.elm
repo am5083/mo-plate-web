@@ -2,8 +2,8 @@ module Main exposing (main)
 
 import Browser
 import Dict exposing (Dict)
-import Html exposing (Html, button, div, h1, input, li, text, ul)
-import Html.Attributes exposing (placeholder, value)
+import Html exposing (Html, a, button, div, footer, h1, header, img, input, p, span, text)
+import Html.Attributes exposing (alt, class, href, maxlength, placeholder, rel, src, target, title, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as Decode exposing (Decoder)
@@ -31,29 +31,29 @@ checkPlate apiBase plate =
     Http.get { url = url, expect = Http.expectJson (CheckResponse plate) resultDecoder }
 
 
-statusText model plate =
+statusControl : Model -> String -> Html Msg
+statusControl model plate =
     case Dict.get plate model.results of
         Nothing ->
-            ""
+            button [ class "check-btn", onClick (CheckRequest plate) ] [ text "check" ]
 
         Just r ->
             case r.available of
                 Just True ->
-                    "available"
+                    span [ class "badge avail" ] [ text "available" ]
 
                 Just False ->
-                    "taken"
+                    span [ class "badge taken" ] [ text "taken" ]
 
                 Nothing ->
-                    r.message
+                    span [ class "badge unknown", title r.message ] [ text "unknown" ]
 
 
-candidateRow : Model -> String -> Html Msg
-candidateRow model plate =
-    li []
-        [ text plate
-        , button [ onClick (CheckRequest plate) ] [ text "check" ]
-        , text (" " ++ statusText model plate)
+candidateCard : Model -> String -> Html Msg
+candidateCard model plate =
+    div [ class "candidate" ]
+        [ div [ class "plate plate-mini" ] [ text plate ]
+        , statusControl model plate
         ]
 
 
@@ -79,9 +79,13 @@ type Msg
 -- INIT
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { seed = "Ahmed", apiBase = "http://localhost:8080", results = Dict.empty }, Cmd.none )
+type alias Flags =
+    { apiBase : String }
+
+
+init : Flags -> ( Model, Cmd Msg )
+init flags =
+    ( { seed = "ahmed", apiBase = flags.apiBase, results = Dict.empty }, Cmd.none )
 
 
 
@@ -112,10 +116,34 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ h1 [] [ text "Plate Finder" ]
-        , input [ placeholder "seed", value model.seed, onInput SeedChanged ] []
-        , ul [] (List.map (candidateRow model) (Variations.fromSeed model.seed))
+    div [ class "page" ]
+        [ header [ class "hero" ]
+            [ img [ class "logo-icon", src "assets/logo.svg", alt "Missouri License Plate Logo" ] []
+            , h1 [ class "title" ] [ text "Missouri Plate Finder" ]
+            , p [ class "subtitle" ]
+                [ text "Generate look-alike & sound-alike vanity plates, then check availability with the Missouri DOR." ]
+            ]
+        , div [ class "plate plate-input" ]
+            [ span [ class "plate-top" ] [ text "MISSOURI" ]
+            , input
+                [ class "seed-field"
+                , value model.seed
+                , maxlength 7
+                , placeholder "AHMED"
+                , onInput SeedChanged
+                ]
+                []
+            , span [ class "plate-bottom" ] [ text "SHOW-ME STATE" ]
+            ]
+        , div [ class "grid" ] (List.map (candidateCard model) (Variations.fromSeed model.seed))
+        , footer [ class "footer" ]
+            [ p []
+                [ text "© 2026 Ahmed Mohamed. This site is not affiliated with the Missouri Department of Revenue. View on "
+                , a [ class "footer-link", href "https://github.com/am5083/mo-plate-web", target "_blank", rel "noopener noreferrer" ]
+                    [ text "GitHub" ]
+                , text "."
+                ]
+            ]
         ]
 
 
@@ -128,6 +156,6 @@ subscriptions _ =
     Sub.none
 
 
-main : Program () Model Msg
+main : Program Flags Model Msg
 main =
     Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }

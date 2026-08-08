@@ -1,7 +1,148 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Plate Finder</title></head>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Generate vanity license plate variations and check availability in real time with the Missouri DOR." />
+  <title>Missouri Plate Finder</title>
+  <style>
+    /* Overpass = open-source highway gothic, the lettering on US road signs/plates */
+    @import url('https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800&display=swap');
+
+    :root {
+      --asphalt: #14171c;
+      --asphalt-2: #1b1f26;
+      --plate-bg: #f7f6f1;
+      --plate-blue: #14387a;   /* Missouri plate blue */
+      --plate-red: #b1232e;
+      --yellow: #f4c20d;       /* highway-sign yellow */
+      --ink: #e8eaee;
+      --muted: #9aa3b2;
+      --avail: #2fbf71;
+      --taken: #e0533d;
+      --unknown: #e3a008;
+      --line: #2a2f39;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Overpass', system-ui, -apple-system, sans-serif;
+      color: var(--ink);
+      background: radial-gradient(1100px 520px at 50% -8%, #232a36, var(--asphalt));
+    }
+    .page { max-width: 880px; margin: 0 auto; padding: 40px 20px 80px; }
+
+    /* hero */
+    .hero { text-align: center; margin-bottom: 30px; }
+    .logo-icon {
+      width: 72px;
+      height: auto;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+    }
+    .title {
+      margin: 0 0 8px;
+      font-weight: 800; font-size: clamp(28px, 5vw, 44px);
+      letter-spacing: 0.04em; text-transform: uppercase; color: #fff;
+    }
+    .subtitle { margin: 0 auto; max-width: 54ch; color: var(--muted); }
+
+    /* the plate look (shared) */
+    .plate {
+      background: linear-gradient(180deg, #ffffff, var(--plate-bg));
+      border: 2px solid #d9d7cc;
+      border-radius: 12px;
+      box-shadow:
+        inset 0 0 0 2px rgba(20, 56, 122, 0.18),  /* stamped inner rim */
+        0 6px 16px rgba(0, 0, 0, 0.45);
+      color: var(--plate-blue);
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    /* big editable plate (the seed) */
+    .plate-input {
+      max-width: 440px; margin: 0 auto 38px; padding: 14px 18px 12px;
+      text-align: center;
+    }
+    .plate-top, .plate-bottom {
+      display: block; font-weight: 600; letter-spacing: 0.22em;
+    }
+    .plate-top { color: var(--plate-red); font-size: 13px; }
+    .plate-bottom { color: var(--plate-blue); opacity: 0.65; font-size: 11px; }
+    .seed-field {
+      width: 100%; padding: 4px 0; border: none; background: transparent;
+      font-family: inherit; font-weight: 800; text-transform: uppercase;
+      text-align: center; color: var(--plate-blue);
+      font-size: clamp(34px, 8vw, 56px); letter-spacing: 0.12em;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9), 0 -1px 1px rgba(20, 56, 122, 0.15);
+    }
+    .seed-field:focus { outline: none; }
+    .seed-field::placeholder { color: rgba(20, 56, 122, 0.25); }
+
+    /* candidate grid */
+    .grid {
+      display: grid; gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    .candidate { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .plate-mini {
+      width: 100%; padding: 12px 10px; text-align: center;
+      font-size: 24px; letter-spacing: 0.14em;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+    }
+
+    /* check button */
+    .check-btn {
+      cursor: pointer; padding: 6px 16px;
+      font-family: inherit; font-weight: 600; font-size: 13px;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--ink); background: var(--asphalt-2);
+      border: 1px solid var(--line); border-radius: 8px;
+      transition: border-color 0.12s ease, color 0.12s ease;
+    }
+    .check-btn:hover { border-color: var(--yellow); color: var(--yellow); }
+
+    /* status badges */
+    .badge {
+      padding: 5px 12px; border-radius: 999px;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .badge.avail   { color: #06301c; background: var(--avail); }
+    .badge.taken   { color: #ffffff; background: var(--taken); }
+    .badge.unknown { color: #2a1d00; background: var(--unknown); cursor: help; }
+
+    /* footer */
+    .footer {
+      margin-top: 60px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .footer-link {
+      color: var(--yellow);
+      text-decoration: none;
+    }
+    .footer-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
 <body>
   <div id="app"></div>
+  <script src="./config.js"></script>
   <script src="./elm.js"></script>
-  <script>Elm.Main.init({ node: document.getElementById("app") });</script>
-</body></html>
+  <script>
+    // Backend URL resolution: ?api= query param, then config.js global, then empty.
+    var apiBase =
+      new URLSearchParams(location.search).get("api") ||
+      window.MO_PLATE_API ||
+      "";
+    Elm.Main.init({
+      node: document.getElementById("app"),
+      flags: { apiBase: apiBase },
+    });
+  </script>
+</body>
+</html>

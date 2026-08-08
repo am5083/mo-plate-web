@@ -1,6 +1,14 @@
-module Variations exposing (..)
+module Variations exposing
+    ( dropAny
+    , fromSeed
+    , normalize
+    , padSimple
+    , reverse
+    , transformers
+    , truncate
+    )
 
-import Set exposing (..)
+import Set
 
 
 normalize : String -> String

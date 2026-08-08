@@ -1,51 +1,67 @@
-# mo-plate-web
+# Missouri Plate Finder
 
-A small Elm frontend for [mo-plate-finder](https://github.com/) built as an excuse to learn Elm.
+This web application generates candidate license plates and checks their availability with the Missouri Department of Revenue.
 
-## Why this exists
+![Application Preview](assets/preview.png)
 
-I came across a job opening that listed Elm, I'd had some Elixir/Erlang experience + OCaml and figured I'd give it a shot to see whether or not it was appealing. I decided
-the best thing to do was a simple webpage frontend to my existing OCaml app.
+## Features
 
-So this repo is a learning exercise more than anything.
+- Generates candidate vanity plates from an input string in the browser.
+- Checks plate availability through an HTTP backend service.
+- Displays candidate plates in a responsive grid.
 
-## What it does
+## System Architecture
 
-Given a seed string, it generates a set of candidate license-plate variations by
-running the seed through a handful of transformations:
+1. The Elm frontend runs in the browser. It generates candidate variations and sends check requests.
+2. The OCaml backend accepts check requests. It queries the Missouri Department of Revenue search service and returns availability status.
+3. The backend limits the request rate to prevent upstream blocks.
 
-- **normalize** — uppercase, strip everything that isn't `A–Z` or `0–9`
-- **reverse** — the seed backwards
-- **truncate** — every left- and right-anchored substring
-- **dropAny** — the seed with each single character removed
-- **padSimple** — the seed with common suffixes appended (e.g. `MO`, `STL`, `KC`, digits), capped at 7 characters
+## Candidate Generation
 
-Results are deduplicated and listed live as you type.
+The frontend applies these rules to the input string:
 
-## Project layout
+- `normalize`: Converts characters to uppercase and removes non-alphanumeric characters.
+- `reverse`: Reverses the string.
+- `truncate`: Creates substrings from the left and right sides.
+- `dropAny`: Removes each character one at a time.
+- `padSimple`: Adds common suffixes and limits length to seven characters.
 
-- `src/Main.elm` — the [Elm Architecture](https://guide.elm-lang.org/architecture/) app (model / update / view), wired up as a `Browser.sandbox`
-- `src/Variations.elm` — the pure variation-generation logic
+The [mo-custom-plate-finder](https://github.com/am5083/mo-custom-plate-finder) OCaml library supports more variation strategies. This frontend implements only a subset of those strategies.
 
-## Running it
+## Build and Run
 
-Requires [Elm 0.19.1](https://guide.elm-lang.org/install/elm.html).
+### Prerequisites
 
+- Elm 0.19.1
+- OCaml 5.x and Dune (optional, for backend development)
+
+### Frontend
+
+1. Start Elm reactor:
 ```sh
 elm reactor
 ```
 
-Then open <http://localhost:8000/src/Main.elm>.
+2. Open `http://localhost:8000/index.html` in your web browser.
 
-Or build a standalone HTML file:
-
+3. To build the production bundle, run:
 ```sh
-elm make src/Main.elm --output=index.html
+elm make src/Main.elm --optimize --output=elm.js
 ```
 
-# TODO
+### Backend
 
-1. Style the frontend + add API support; style frontend
-2. Implement OCaml backend + add docker container + host on gh pages
+1. Build the backend:
+```sh
+dune build
+```
 
+2. Start the backend server:
+```sh
+dune exec server/main.exe
+```
 
+3. To connect the frontend to the local backend, open:
+```text
+http://localhost:8000/index.html?api=http://localhost:8080
+```
